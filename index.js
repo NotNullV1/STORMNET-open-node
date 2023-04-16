@@ -1,3 +1,5 @@
+const version = "0.0.2"
+
 const fs = require('fs');
 
 const server = require('https').createServer({
@@ -24,7 +26,8 @@ io.on('connection', client => {
     })
   }
 
-  client.on('redirectedEncryptedMessage', message => processMessage(message));
+  client.on('redirectedEncryptedMessage', processMessage);
+  client.on('getVersion', () => client.emit("version", version));
   client.on('disconnect', () => {
     console.log("disconnected")
   });
