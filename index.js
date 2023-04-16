@@ -27,7 +27,7 @@ io.on('connection', client => {
   }
 
   client.on('redirectedEncryptedMessage', processMessage);
-  client.on('getVersion', () => client.emit("version", version));
+  client.on('getStormnetVersion', () => client.emit("stormnetVersion", version));
   client.on('disconnect', () => {
     console.log("disconnected")
   });
