@@ -1,4 +1,4 @@
-const version = "0.0.2"
+const version = "0.0.3";
 
 const fs = require('fs');
 const crypto = require('crypto');
@@ -23,22 +23,43 @@ io.on('connection', client => {
   clients.push(client)
   function processMessage(message) {
     message.from = client.id;
-    console.log(message)
-    if(message.pow==undefined||message.hash==undefined||message.messageId==undefined) {
+
+    if(message.pow==undefined||message.keyPow==undefined||message.hash==undefined||message.keyHash==undefined||message.messageId==undefined) {
+      console.log("missing data")
       client.disconnect();
       return;
     }
+    
+    if(!message.hash.startsWith("0000")) {
+      console.log("invalid message pow")
+      client.disconnect();
+      return;
+    }
+    if(!message.keyHash.startsWith("000000")) {
+      console.log("invalid key pow")
+      client.disconnect();
+      return;
+    }
+
     var toVerify = {
       messageId: message.messageId,
       encryptedMessage: message.encryptedMessage,
       encryptedKey: message.encryptedKey,
       publicKey: message.publicKey
     }
-    if(sha256(JSON.stringify(toVerify)+message.pow)!=message.hash||!message.hash.startsWith("0000")) {
-      // invalid proof of work
+
+    if(sha256(JSON.stringify(toVerify)+message.pow)!=message.hash) {
+      console.log("invalid hash")
       client.disconnect();
       return;
     }
+    if(sha256(message.publicKey.toString()+message.keyPow)!=message.keyHash) {
+      console.log("invalid key hash")
+      client.disconnect();
+      return;
+    }
+
+    
     if(receivedMessages.includes(message.messageId)) return;
     receivedMessages.push(message.messageId)
     clients.forEach(c=>{
@@ -47,7 +68,10 @@ io.on('connection', client => {
     })
   }
 
-  client.on('redirectedEncryptedMessage', processMessage);
+  client.on('redirectedEncryptedMessage', (message)=>{
+    console.log(message);
+    processMessage(message);
+  });
   client.on('getStormnetVersion', () => client.emit("stormnetVersion", version));
   client.on('disconnect', () => {
     console.log("disconnected")
