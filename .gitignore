@@ -1,2 +1,5 @@
-node_modules/
+.vscode/
 *.pem
+dist/
+node_modules/
+package-lock.json
